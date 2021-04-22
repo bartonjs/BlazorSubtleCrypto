@@ -1,0 +1,10 @@
+﻿@page "/crypto"
+@inject IJSRuntime JS;
+
+<h1>Crypto</h1>
+
+<p>Input Message: <input @bind="_input"/></p>
+
+<button class="btn btn-primary" @onclick="Encrypt">Encrypt</button>
+
+<p>Output: @_output</p>
