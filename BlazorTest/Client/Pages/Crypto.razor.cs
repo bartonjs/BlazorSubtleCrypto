@@ -28,25 +28,29 @@ namespace BlazorTest.Client.Pages
         {
             AesCbc key = await GetKey();
 
-            //SubtleCrypto.CryptoKey key = await sc.ImportSecretKey(new byte[16], SubtleCrypto.Algorithm.AesCbc);
-            //Debug.Assert(key != null);
-
-            //string output = await sc.Encrypt(
-            //    Encoding.UTF8.GetBytes(_input ?? ""),
-            //    new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-            //    key,
-            //    SubtleCrypto.Algorithm.AesCbc);
-
-            //_output = output;
-            //_output = await sc.AesCbcEncrypt(
-            //    new byte[16],
-            //    new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 },
-            //    Encoding.UTF8.GetBytes(_input ?? ""));
             byte[] output = await key.EncryptAsync(
                 Encoding.UTF8.GetBytes(_input ?? ""),
                 new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 });
 
             _output = Convert.ToBase64String(output);
+        }
+
+        private async Task Decrypt()
+        {
+            AesCbc key = await GetKey();
+
+            try
+            {
+                byte[] output = await key.DecryptAsync(
+                    Convert.FromBase64String(_input ?? ""),
+                    new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15});
+
+                _output = Encoding.UTF8.GetString(output);
+            }
+            catch (Exception e)
+            {
+                _output = e.ToString();
+            }
         }
     }
 }
