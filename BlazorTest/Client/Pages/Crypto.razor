@@ -3,12 +3,14 @@
 
 <h1>Crypto</h1>
 
-<p>Input Message: <input @bind="_input"/></p>
+<p>Input Message: <input @bind="_input" /></p>
 
 <button class="btn btn-primary" @onclick="Encrypt">Encrypt</button>
 <button class="btn btn-primary" @onclick="Decrypt">Decrypt</button>
 <button class="btn btn-primary" @onclick="GenerateKey">Generate New Key</button>
+<button class="btn btn-primary" @onclick="Sha1">SHA1</button>
+<button class="btn btn-primary" @onclick="Sha256">SHA256</button>
 
-<p>Key: @_keyLabel</p>
+<p>Symmetric Key: @_keyLabel</p>
 <p>IV: @_ivLabel</p>
 <p>Output: @_output</p>

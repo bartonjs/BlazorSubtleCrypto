@@ -12,6 +12,12 @@ async function makeBase64AnswerOrError(arrayPromise) {
     }
 }
 
+export async function computeDigest(algorithm, data) {
+    var parsedData = base64Decode(data);
+    var promise = window.crypto.subtle.digest(algorithm, parsedData);
+    return await makeBase64AnswerOrError(promise);
+}
+
 var keys = {};
 
 export function freeKey(keyId) {

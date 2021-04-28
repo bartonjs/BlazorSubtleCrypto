@@ -82,5 +82,17 @@ namespace BlazorTest.Client.Pages
                 _output = e.ToString();
             }
         }
+
+        private async Task Sha1()
+        {
+            _output = Convert.ToHexString(
+                await GetSubtleCrypto().ComputeHashSha1Async(Encoding.UTF8.GetBytes(_input ?? "")));
+        }
+
+        private async Task Sha256()
+        {
+            _output = Convert.ToHexString(
+                await GetSubtleCrypto().ComputeHashSha256Async(Encoding.UTF8.GetBytes(_input ?? "")));
+        }
     }
 }

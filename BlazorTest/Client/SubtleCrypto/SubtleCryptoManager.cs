@@ -50,6 +50,35 @@ namespace BlazorTest.Client.SubtleCrypto
             return ImportSymmetricKeyAsync(key, "AES-CBC", (handle, name) => new AesCbc(handle, name));
         }
 
+        public Task<byte[]> ComputeHashSha1Async(byte[] input)
+        {
+            if (input is null)
+                throw new ArgumentNullException(nameof(input));
+
+            return ComputeHashAsync("SHA-1", input);
+        }
+
+        public Task<byte[]> ComputeHashSha256Async(byte[] input)
+        {
+            if (input is null)
+                throw new ArgumentNullException(nameof(input));
+
+            return ComputeHashAsync("SHA-256", input);
+        }
+
+        private async Task<byte[]> ComputeHashAsync(string algorithm, byte[] input)
+        {
+            AnswerOrError ret = await (await GetModule()).InvokeAsync<AnswerOrError>(
+                "computeDigest",
+                new object[]
+                {
+                    algorithm,
+                    Convert.ToBase64String(input),
+                });
+
+            return ret.GetAnswerFromBase64();
+        }
+
         public ValueTask DisposeAsync()
         {
             IJSObjectReference module = _module;
