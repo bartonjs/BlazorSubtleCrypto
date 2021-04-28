@@ -31,6 +31,18 @@ namespace BlazorTest.Client.SubtleCrypto
             return new ValueTask(_keyHandle.ReleaseHandleAsync());
         }
 
+        public async Task<byte[]> ExportKey()
+        {
+            AnswerOrError response = await _keyHandle.Module.InvokeAsync<AnswerOrError>(
+                "exportSecretKey",
+                new object[]
+                {
+                    _keyHandle.Name,
+                });
+
+            return response.GetAnswerFromBase64();
+        }
+
         protected Task<byte[]> EncryptAsyncCore(byte[] data, byte[] iv)
         {
             return EncryptOrDecryptAsync("symmetricEncrypt", data, iv);

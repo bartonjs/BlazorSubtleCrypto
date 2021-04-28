@@ -17,6 +17,21 @@ namespace BlazorTest.Client.SubtleCrypto
             _runtime = runtime;
         }
 
+        public Task<AesCbc> CreateAesCbcKey(int keySize)
+        {
+            switch (keySize)
+            {
+                case 128:
+                case 192:
+                case 256:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(keySize));
+            }
+
+            return GenerateSymmetricKeyAsync(keySize, "AES-CBC", (handle, name) => new AesCbc(handle, name));
+        }
+
         public Task<AesCbc> ImportAesCbcKeyAsync(byte[] key)
         {
             if (key is null)
@@ -56,6 +71,34 @@ namespace BlazorTest.Client.SubtleCrypto
             }
 
             return _module;
+        }
+
+        private async Task<T> GenerateSymmetricKeyAsync<T>(
+            int keySize,
+            string algorithmName,
+            Func<SafeCryptoKeyHandle, string, T> ctor)
+        {
+            bool? result;
+            IJSObjectReference module = await GetModule();
+            string keyId;
+
+            do
+            {
+                keyId = Guid.NewGuid().ToString("N");
+                result = await module.InvokeAsync<bool?>(
+                    "generateSecretKey",
+                    keySize,
+                    keyId,
+                    algorithmName);
+            } while (!result.HasValue);
+
+            if (result.GetValueOrDefault())
+            {
+                SafeCryptoKeyHandle handle = new SafeCryptoKeyHandle(keyId, module);
+                return ctor(handle, algorithmName);
+            }
+
+            throw new Exception("?");
         }
 
         private async Task<T> ImportSymmetricKeyAsync<T>(

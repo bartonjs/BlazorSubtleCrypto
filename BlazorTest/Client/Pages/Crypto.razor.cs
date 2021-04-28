@@ -13,6 +13,8 @@ namespace BlazorTest.Client.Pages
 
         private SubtleCryptoManager _subtleCrypto;
         private AesCbc _key;
+        private string _keyLabel;
+        private string _ivLabel;
 
         private SubtleCryptoManager GetSubtleCrypto()
         {
@@ -21,7 +23,13 @@ namespace BlazorTest.Client.Pages
 
         private async Task<AesCbc> GetKey()
         {
-            return _key ??= await GetSubtleCrypto().ImportAesCbcKeyAsync(new byte[16]);
+            if (_key == null)
+            {
+                _key = await GetSubtleCrypto().ImportAesCbcKeyAsync(new byte[16]);
+                _keyLabel = Convert.ToHexString(await _key.ExportKey());
+            }
+
+            return _key;
         }
 
         private async Task Encrypt()
@@ -46,6 +54,28 @@ namespace BlazorTest.Client.Pages
                     new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15});
 
                 _output = Encoding.UTF8.GetString(output);
+            }
+            catch (Exception e)
+            {
+                _output = e.ToString();
+            }
+        }
+
+        private async Task GenerateKey()
+        {
+            try
+            {
+                int keySize = int.Parse(_input);
+
+                AesCbc newKey = await GetSubtleCrypto().CreateAesCbcKey(keySize);
+
+                if (_key != null)
+                {
+                    await _key.DisposeAsync();
+                }
+
+                _key = newKey;
+                _keyLabel = Convert.ToHexString(await _key.ExportKey());
             }
             catch (Exception e)
             {

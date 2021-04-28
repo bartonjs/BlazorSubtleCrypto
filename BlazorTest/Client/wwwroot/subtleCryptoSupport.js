@@ -18,13 +18,13 @@ export function freeKey(keyId) {
     delete keys[keyId];
 }
 
-export async function importSecretKey(key, keyId, algorithm) {
+export async function generateSecretKey(keySize, keyId, algorithm) {
     if (keys[keyId]) {
         return null;
     }
 
-    var parsedKey = base64Decode(key);
-    var cryptoKey = await window.crypto.subtle.importKey("raw", parsedKey, algorithm, false, ["encrypt", "decrypt"]);
+    var genAlg = { name: algorithm, length: keySize };
+    var cryptoKey = await window.crypto.subtle.generateKey(genAlg, true, ["encrypt", "decrypt"]);
 
     if (cryptoKey) {
         keys[keyId] = cryptoKey;
@@ -32,6 +32,28 @@ export async function importSecretKey(key, keyId, algorithm) {
     }
 
     return false;
+}
+
+export async function importSecretKey(key, keyId, algorithm) {
+    if (keys[keyId]) {
+        return null;
+    }
+
+    var parsedKey = base64Decode(key);
+    var cryptoKey = await window.crypto.subtle.importKey("raw", parsedKey, algorithm, true, ["encrypt", "decrypt"]);
+
+    if (cryptoKey) {
+        keys[keyId] = cryptoKey;
+        return true;
+    }
+
+    return false;
+}
+
+export async function exportSecretKey(keyId) {
+    var cryptoKey = keys[keyId];
+    var promise = window.crypto.subtle.exportKey("raw", cryptoKey);
+    return await makeBase64AnswerOrError(promise);
 }
 
 export async function symmetricEncrypt(keyId, data, iv, algorithm) {
