@@ -61,12 +61,7 @@ namespace BlazorTest.Client.SubtleCrypto
                     AlgorithmName
                 });
 
-            if (response.A != null)
-            {
-                return Convert.FromBase64String(response.A);
-            }
-
-            throw new Exception(response.E);
+            return response.GetAnswerFromBase64();
         }
     }
 }
