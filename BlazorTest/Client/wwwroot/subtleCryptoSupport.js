@@ -12,6 +12,15 @@ async function makeBase64AnswerOrError(arrayPromise) {
     }
 }
 
+async function makeBooleanAnswerOrError(arrayPromise) {
+    try {
+        var result = await arrayPromise;
+        return { b: result };
+    } catch (error) {
+        return { e: error.toString() };
+    }
+}
+
 export async function computeDigest(algorithm, data) {
     var parsedData = base64Decode(data);
     var promise = window.crypto.subtle.digest(algorithm, parsedData);
@@ -76,4 +85,59 @@ export async function symmetricDecrypt(keyId, data, iv, algorithm) {
     var cryptoKey = keys[keyId];
     var promise = window.crypto.subtle.decrypt(alg, cryptoKey, parsedData);
     return await makeBase64AnswerOrError(promise);
+}
+
+var rsaPublicExponent = Uint8Array.from([0x01, 0x00, 0x01]);
+
+export async function generateRsaKey(keySize, keyId, algorithm, hashAlgorithm, signatureKey) {
+    if (keys[keyId]) {
+        return null;
+    }
+
+    var genAlg = {
+        name: algorithm,
+        modulusLength: keySize,
+        publicExponent: rsaPublicExponent,
+        hash: hashAlgorithm
+    };
+
+    var usages = signatureKey ? ["sign", "verify"] : ["encrypt", "decrypt"];
+
+    var cryptoKey = await window.crypto.subtle.generateKey(genAlg, true, usages);
+
+    if (cryptoKey) {
+        keys[keyId] = cryptoKey;
+        return true;
+    }
+
+    return false;
+}
+
+export async function exportPublicKey(keyId) {
+    var cryptoKeyPair = keys[keyId];
+    var promise = window.crypto.subtle.exportKey("spki", cryptoKeyPair.publicKey);
+    return await makeBase64AnswerOrError(promise);
+}
+
+export async function exportPrivateKey(keyId) {
+    var cryptoKeyPair = keys[keyId];
+    var promise = window.crypto.subtle.exportKey("pkcs8", cryptoKeyPair.privateKey);
+    return await makeBase64AnswerOrError(promise);
+}
+
+export async function signData(keyId, algorithm, data) {
+    var parsedData = base64Decode(data);
+    var alg = { name: algorithm };
+    var cryptoKeyPair = keys[keyId];
+    var promise = window.crypto.subtle.sign(alg, cryptoKeyPair.privateKey, parsedData);
+    return await makeBase64AnswerOrError(promise);
+}
+
+export async function verifyData(keyId, algorithm, data, signature) {
+    var parsedData = base64Decode(data);
+    var parsedSignature = base64Decode(signature);
+    var alg = { name: algorithm };
+    var cryptoKeyPair = keys[keyId];
+    var promise = window.crypto.subtle.verify(alg, cryptoKeyPair.publicKey, parsedSignature, parsedData);
+    return await makeBooleanAnswerOrError(promise);
 }

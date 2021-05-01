@@ -4,7 +4,7 @@ using Microsoft.JSInterop;
 
 namespace BlazorTest.Client.SubtleCrypto
 {
-    public sealed class SubtleCryptoManager : IAsyncDisposable
+    public sealed partial class SubtleCryptoManager : IAsyncDisposable
     {
         private readonly IJSRuntime _runtime;
         private IJSObjectReference _module;
