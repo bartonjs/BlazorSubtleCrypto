@@ -66,17 +66,20 @@ namespace BlazorTest.Client.SubtleCrypto
             return ComputeHashAsync("SHA-256", input);
         }
 
-        private async Task<byte[]> ComputeHashAsync(string algorithm, byte[] input)
+        public Task<HmacKey> ImportHmacKeySha256Async(byte[] key)
         {
-            AnswerOrError ret = await (await GetModule()).InvokeAsync<AnswerOrError>(
-                "computeDigest",
-                new object[]
-                {
-                    algorithm,
-                    Convert.ToBase64String(input),
-                });
+            if (key is null)
+                throw new ArgumentNullException(nameof(key));
 
-            return ret.GetAnswerFromBase64();
+            return ImportHmacKeyAsync("SHA-256", 256 / 8, key);
+        }
+
+        public Task<HmacKey> ImportHmacKeySha384Async(byte[] key)
+        {
+            if (key is null)
+                throw new ArgumentNullException(nameof(key));
+
+            return ImportHmacKeyAsync("SHA-384", 384 / 8, key);
         }
 
         public ValueTask DisposeAsync()
@@ -90,6 +93,19 @@ namespace BlazorTest.Client.SubtleCrypto
             }
 
             return ValueTask.CompletedTask;
+        }
+
+        private async Task<byte[]> ComputeHashAsync(string algorithm, byte[] input)
+        {
+            AnswerOrError ret = await (await GetModule()).InvokeAsync<AnswerOrError>(
+                "computeDigest",
+                new object[]
+                {
+                    algorithm,
+                    Convert.ToBase64String(input),
+                });
+
+            return ret.GetAnswerFromBase64();
         }
 
         private async ValueTask<IJSObjectReference> GetModule()
@@ -153,6 +169,34 @@ namespace BlazorTest.Client.SubtleCrypto
             {
                 SafeCryptoKeyHandle handle = new SafeCryptoKeyHandle(keyId, module);
                 return ctor(handle, algorithmName);
+            }
+
+            throw new Exception("?");
+        }
+
+        private async Task<HmacKey> ImportHmacKeyAsync(
+            string algorithmName,
+            int outputLength,
+            ReadOnlyMemory<byte> key)
+        {
+            bool? result;
+            IJSObjectReference module = await GetModule();
+            string keyId;
+
+            do
+            {
+                keyId = Guid.NewGuid().ToString("N");
+                result = await module.InvokeAsync<bool?>(
+                    "importHmacKey",
+                    Convert.ToBase64String(key.Span),
+                    keyId,
+                    algorithmName);
+            } while (!result.HasValue);
+
+            if (result.GetValueOrDefault())
+            {
+                SafeCryptoKeyHandle handle = new SafeCryptoKeyHandle(keyId, module);
+                return new HmacKey(handle, algorithmName, outputLength);
             }
 
             throw new Exception("?");

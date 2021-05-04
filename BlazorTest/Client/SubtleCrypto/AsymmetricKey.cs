@@ -3,41 +3,23 @@ using System.Threading.Tasks;
 
 namespace BlazorTest.Client.SubtleCrypto
 {
-    public abstract class AsymmetricKey : IDisposable, IAsyncDisposable
+    public abstract class AsymmetricKey : CryptoKey
     {
-        private SafeCryptoKeyHandle _keyHandle;
-
         public string AlgorithmName { get; }
 
         private protected AsymmetricKey(SafeCryptoKeyHandle keyHandle, string algorithmName)
+            : base(keyHandle)
         {
             AlgorithmName = algorithmName;
-            _keyHandle = keyHandle;
-        }
-
-        public void Dispose()
-        {
-            _keyHandle?.Dispose();
-            _keyHandle = null;
-        }
-
-        public ValueTask DisposeAsync()
-        {
-            if (_keyHandle == null)
-            {
-                return ValueTask.CompletedTask;
-            }
-
-            return new ValueTask(_keyHandle.ReleaseHandleAsync());
         }
 
         public async Task<byte[]> ExportPublicKeyAsync()
         {
-            AnswerOrError response = await _keyHandle.Module.InvokeAsync<AnswerOrError>(
+            AnswerOrError response = await KeyHandle.Module.InvokeAsync<AnswerOrError>(
                 "exportPublicKey",
                 new object[]
                 {
-                    _keyHandle.Name,
+                    KeyHandle.Name,
                 });
 
             return response.GetAnswerFromBase64();
@@ -45,11 +27,11 @@ namespace BlazorTest.Client.SubtleCrypto
 
         public async Task<byte[]> ExportPrivateKeyAsync()
         {
-            AnswerOrError response = await _keyHandle.Module.InvokeAsync<AnswerOrError>(
+            AnswerOrError response = await KeyHandle.Module.InvokeAsync<AnswerOrError>(
                 "exportPrivateKey",
                 new object[]
                 {
-                    _keyHandle.Name,
+                    KeyHandle.Name,
                 });
 
             return response.GetAnswerFromBase64();
@@ -59,11 +41,11 @@ namespace BlazorTest.Client.SubtleCrypto
         {
             string base64Data = Convert.ToBase64String(data.Span);
 
-            AnswerOrError response = await _keyHandle.Module.InvokeAsync<AnswerOrError>(
+            AnswerOrError response = await KeyHandle.Module.InvokeAsync<AnswerOrError>(
                 "signData",
                 new object[]
                 {
-                    _keyHandle.Name,
+                    KeyHandle.Name,
                     AlgorithmName,
                     base64Data,
                 });
@@ -78,11 +60,11 @@ namespace BlazorTest.Client.SubtleCrypto
             string base64Data = Convert.ToBase64String(data.Span);
             string base64Signature = Convert.ToBase64String(signature.Span);
 
-            AnswerOrError response = await _keyHandle.Module.InvokeAsync<AnswerOrError>(
+            AnswerOrError response = await KeyHandle.Module.InvokeAsync<AnswerOrError>(
                 "verifyData",
                 new object[]
                 {
-                    _keyHandle.Name,
+                    KeyHandle.Name,
                     AlgorithmName,
                     base64Data,
                     base64Signature,

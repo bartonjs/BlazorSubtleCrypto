@@ -87,6 +87,30 @@ export async function symmetricDecrypt(keyId, data, iv, algorithm) {
     return await makeBase64AnswerOrError(promise);
 }
 
+export async function importHmacKey(key, keyId, algorithm) {
+    if (keys[keyId]) {
+        return null;
+    }
+
+    var parsedKey = base64Decode(key);
+    var keyAlg = { name: "HMAC", hash: algorithm };
+    var cryptoKey = await window.crypto.subtle.importKey("raw", parsedKey, keyAlg, true, ["sign"]);
+
+    if (cryptoKey) {
+        keys[keyId] = cryptoKey;
+        return true;
+    }
+
+    return false;
+}
+
+export async function computeHmac(keyId, data) {
+    var parsedData = base64Decode(data);
+    var cryptoKey = keys[keyId];
+    var promise = window.crypto.subtle.sign("HMAC", cryptoKey, parsedData);
+    return await makeBase64AnswerOrError(promise);
+}
+
 var rsaPublicExponent = Uint8Array.from([0x01, 0x00, 0x01]);
 
 export async function generateRsaKey(keySize, keyId, algorithm, hashAlgorithm, signatureKey) {

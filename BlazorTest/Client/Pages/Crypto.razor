@@ -10,7 +10,11 @@
 <button class="btn btn-primary" @onclick="GenerateKey">Generate New Key</button>
 <button class="btn btn-primary" @onclick="Sha1">SHA1</button>
 <button class="btn btn-primary" @onclick="Sha256">SHA256</button>
+<button class="btn btn-primary" @onclick="ImportHmacSha256">Import HMACSHA256</button>
+<button class="btn btn-primary" @onclick="ImportHmacSha384">Import HMACSHA384</button>
+<button class="btn btn-primary" disabled=@DisableHmacButton @onclick="Hmac">HMAC</button>
 
 <p>Symmetric Key: @_keyLabel</p>
+<p>HMAC Key: @_hmacKeyLabel</p>
 <p>IV: @_ivLabel</p>
 <p>Output: @_output</p>

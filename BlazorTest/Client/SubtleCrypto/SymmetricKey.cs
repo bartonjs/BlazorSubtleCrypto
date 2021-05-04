@@ -3,41 +3,23 @@ using System.Threading.Tasks;
 
 namespace BlazorTest.Client.SubtleCrypto
 {
-    public abstract class SymmetricKey : IDisposable, IAsyncDisposable
+    public abstract class SymmetricKey : CryptoKey
     {
-        private SafeCryptoKeyHandle _keyHandle;
-
         internal string AlgorithmName { get; }
 
         private protected SymmetricKey(SafeCryptoKeyHandle keyHandle, string algorithmName)
+            : base(keyHandle)
         {
-            _keyHandle = keyHandle;
             AlgorithmName = algorithmName;
         }
 
-        public void Dispose()
+        public async Task<byte[]> ExportKeyAsync()
         {
-            _keyHandle?.Dispose();
-            _keyHandle = null;
-        }
-
-        public ValueTask DisposeAsync()
-        {
-            if (_keyHandle == null)
-            {
-                return ValueTask.CompletedTask;
-            }
-
-            return new ValueTask(_keyHandle.ReleaseHandleAsync());
-        }
-
-        public async Task<byte[]> ExportKey()
-        {
-            AnswerOrError response = await _keyHandle.Module.InvokeAsync<AnswerOrError>(
+            AnswerOrError response = await KeyHandle.Module.InvokeAsync<AnswerOrError>(
                 "exportSecretKey",
                 new object[]
                 {
-                    _keyHandle.Name,
+                    KeyHandle.Name,
                 });
 
             return response.GetAnswerFromBase64();
@@ -63,11 +45,11 @@ namespace BlazorTest.Client.SubtleCrypto
                 base64Iv = Convert.ToBase64String(iv);
             }
 
-            AnswerOrError response = await _keyHandle.Module.InvokeAsync<AnswerOrError>(
+            AnswerOrError response = await KeyHandle.Module.InvokeAsync<AnswerOrError>(
                 operation,
                 new object[]
                 {
-                    _keyHandle.Name,
+                    KeyHandle.Name,
                     base64Data,
                     base64Iv,
                     AlgorithmName
